@@ -1,0 +1,61 @@
+name: Deploy packages to VPS
+
+on:
+  workflow_run:
+    workflows: ["Packages"]
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions: {} # none
+
+jobs:
+  deploy:
+    permissions:
+      contents: read
+    if: github.repository == 'binyaminbinni/termux-packages' && github.ref == 'refs/heads/master' && github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone repository
+      uses: actions/checkout@v5
+    
+    - name: Get built packages
+      uses: actions/download-artifact@v5
+      with:
+        path: ./artifacts
+        pattern: debs-*
+        merge-multiple: false
+    
+    - name: Extract artifacts
+      run: |
+        mkdir -p ./debs
+        for archive in artifacts/debs-*/debs-{aarch64,arm,i686,x86_64}-*.tar; do
+          if [ -f "$archive" ]; then
+            tar xf "$archive" -C ./debs
+          fi
+        done
+    
+    - name: Setup SSH and deploy to VPS
+      env:
+        VPS_HOST: ${{ secrets.VPS_HOST }}
+        VPS_USER: ${{ secrets.VPS_USER }}
+        VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
+      run: |
+        # Setup SSH
+        mkdir -p ~/.ssh
+        echo "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+        
+        # Create remote directory if it doesn't exist
+        ssh -i ~/.ssh/deploy_key "$VPS_USER@$VPS_HOST" "mkdir -p $VPS_DEPLOY_PATH/incoming"
+        
+        # Upload packages to VPS
+        rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
+          ./debs/*.deb \
+          "$VPS_USER@$VPS_HOST:$VPS_DEPLOY_PATH/incoming/"
+        
+        # Trigger repository update on VPS (you need to have a script on the VPS to process these)
+        ssh -i ~/.ssh/deploy_key "$VPS_USER@$VPS_HOST" \
+          "cd $VPS_DEPLOY_PATH && ./update-repo.sh incoming"
