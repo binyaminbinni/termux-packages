@@ -337,7 +337,7 @@ jobs:
   upload-test:
     permissions:
       contents: read
-    if: github.repository == 'termux/termux-packages' && github.ref != 'refs/heads/master'
+    if: github.repository == 'binyaminbinni/termux-packages' && github.ref != 'refs/heads/master'
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -404,7 +404,7 @@ jobs:
     concurrency: ${{ github.workflow }}
     permissions:
       contents: read
-    if: github.repository == 'termux/termux-packages' && github.ref == 'refs/heads/master'
+    if: github.repository == 'binyaminbinni/termux-packages' && github.ref == 'refs/heads/master'
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -414,9 +414,9 @@ jobs:
       uses: actions/download-artifact@v5
       with:
         path: ./
-    - name: Upload to packages.termux.dev
+    - name: Upload to packages.bxitools.com
       env:
-        REPOSITORY_URL: https://packages.termux.dev/aptly-api
+        REPOSITORY_URL: https://packages.bxitools.com/aptly-api
         GITHUB_SHA: ${{ github.sha }}
         APTLY_API_AUTH: ${{ secrets.APTLY_API_AUTH }}
         GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
