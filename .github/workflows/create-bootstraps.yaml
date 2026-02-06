@@ -34,7 +34,9 @@ jobs:
 
       - name: Generate bootstrap archive
         run: |
+          chmod 777 ./scripts/setup-ubuntu.sh
           ./scripts/setup-ubuntu.sh
+          chmod 777 ./scripts/build-bootstrap.sh
           ./scripts/build-bootstrap.sh --architectures ${{ matrix.arch }}
 
       - name: Upload artifacts
