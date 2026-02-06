@@ -1,4 +1,4 @@
-name: Generate bootstrap archives
+huname: Generate bootstrap archives
 
 on:
   workflow_dispatch:
@@ -34,7 +34,8 @@ jobs:
 
       - name: Generate bootstrap archive
         run: |
-          ./scripts/build-bootstraps.sh --architectures ${{ matrix.arch }}
+          ./scripts/setup-ubuntu.sh
+          ./scripts/build-bootstrap.sh --architectures ${{ matrix.arch }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
