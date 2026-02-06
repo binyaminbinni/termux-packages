@@ -1,0 +1,43 @@
+name: Generate bootstrap archives
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        arch:
+          - aarch64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            build-essential \
+            curl \
+            git \
+            jq \
+            proot \
+            tar \
+            unzip \
+            wget
+
+      - name: Generate bootstrap archive
+        run: |
+          ./scripts/generate-bootstraps.sh --architectures ${{ matrix.arch }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bootstrap-${{ matrix.arch }}
+          path: "*.zip"
